@@ -1,0 +1,18 @@
+【ERROR】2020-04-05 08:33:33,209 - GetNetData.py:writeExcel[line:166]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 08:34:36,485 - GetNetData.py:writeExcel[line:166]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 08:39:10,446 - GetNetData.py:writeExcel[line:165]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 08:44:33,777 - GetNetData.py:writeExcel[line:165]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 08:47:56,204 - GetNetData.py:writeExcel[line:165]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 08:58:04,097 - GetNetData.py:writeExcel[line:161]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 08:59:08,679 - GetNetData.py:writeExcel[line:161]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 09:00:28,431 - GetNetData.py:writeExcel[line:161]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 09:01:20,446 - GetNetData.py:writeExcel[line:161]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 09:02:51,644 - GetNetData.py:writeExcel[line:161]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 09:03:20,308 - GetNetData.py:writeExcel[line:161]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 09:04:12,997 - GetNetData.py:writeExcel[line:161]: Excel生成失败 'int' object is not iterable
+【ERROR】2020-04-05 09:08:18,836 - GetNetData.py:writeExcel[line:165]: Excel生成失败 'int' object has no attribute 'get'
+【ERROR】2020-04-05 09:09:45,866 - GetNetData.py:writeExcel[line:165]: Excel生成失败 'int' object has no attribute 'get'
+【ERROR】2020-04-05 09:13:04,688 - GetNetData.py:writeExcel[line:165]: Excel生成失败 'int' object is not subscriptable
+【ERROR】2020-04-05 09:25:44,603 - GetNetData.py:writeExcel[line:179]: Excel生成失败 Attempt to overwrite cell: sheetname='Data' rowx=25 colx=0
+【ERROR】2020-04-05 09:26:21,568 - GetNetData.py:writeExcel[line:179]: Excel生成失败 [Errno 13] Permission denied: 'C:\\Users\\dapao\\Desktop\\aaa.xls'
+【ERROR】2020-04-05 15:54:07,114 - GetNetData.py:writeExcel[line:182]: Excel生成失败 [Errno 13] Permission denied: 'C:\\Users\\dapao\\Desktop\\aaa.xls'
