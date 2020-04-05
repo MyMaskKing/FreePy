@@ -24,7 +24,6 @@ from future.backports.misc import count
 # 数据文件路径
 # LogUtils.getLogger().logger.info('第一次测试')
 # 网站地址(天天基金网)
-# url = 'http://127.0.0.1:8082/free.com/login/login#'
 url = 'http://fund.eastmoney.com/ZS_jzzzl.html#os_0;isall_0;ft_;pt_5'
 file_path = r"E:\AboutDeveloper\Workspace_Eclipse\freePy\com\free\download"
 excel_path = r"C:\Users\dapao\Desktop"
@@ -77,8 +76,8 @@ def isExistsClass(element,classStr):
 # 判断网页是否存在
 def adjustExist(url):
         # 文件路径
-#         fileName = file_path + fileNamePrefix + currentTime + fileNameSuffix
-        fileName = file_path + fileNamePrefix + "20200405083436" + ".html"
+        fileName = file_path + fileNamePrefix + currentTime + fileNameSuffix
+#         fileName = file_path + fileNamePrefix + "20200405083436" + ".html"
         # 定义文件对象
         openFile = ""
         networTree = ""
