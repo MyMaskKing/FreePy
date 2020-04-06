@@ -23,12 +23,12 @@ from future.backports.misc import count
 # Log日志
 # 数据文件路径
 # LogUtils.getLogger().logger.info('第一次测试')
-# 网站地址(天天基金网)
+# 网站地址(天天基金网：开方式基金净值)
 url = 'http://fund.eastmoney.com/ZS_jzzzl.html#os_0;isall_0;ft_;pt_5'
 file_path = r"E:\AboutDeveloper\Workspace_Eclipse\freePy\com\free\download"
 excel_path = r"C:\Users\dapao\Desktop"
 currentTime = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-fileNamePrefix = r"/network_data_"
+fileNamePrefix = r"/network_tp1_data_"
 fileNameSuffix = ".html"
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb2312')
 sys.setrecursionlimit(1000000)
