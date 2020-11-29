@@ -7,8 +7,8 @@ Created on 2020年4月2日
 @author: dapao
 '''
 import requests
-from com.free.util import LogUtils
-from com.free.util import MailUtils
+from com.free.utils import LogUtils
+from com.free.utils import MailUtils
 import sys
 # 用于解决爬取的数据格式化
 import io

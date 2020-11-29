@@ -176,7 +176,7 @@ def writeExcel(execelTitle,execelList):
                 add_sheet.write(index,7,label = ex[8]);
             index = index + 1;
         workbook.save(excel_path + r'\aaa.xls')
-        LogUtils.getLogger().logger.info("Excel生成成功")
+        LogUtils.getLogger().logger.info("Excel生成成功【File Path:" + excel_path + "】")
     except Exception as e :
         LogUtils.getErrorLogger().logger.error("Excel生成失败 % s" % e)
 
