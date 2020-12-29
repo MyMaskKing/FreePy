@@ -1,4 +1,3 @@
-from com.free.util import MailUtils
+from com.free.utils import MailUtils
 
-if __name__ == '__main__':
-    MailUtils.sendmail("GetNetData", "xinxi")
+MailUtils.sendmail("123","Test", r"C:\myfree_config\freePy\config\config.properties")

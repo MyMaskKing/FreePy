@@ -59,8 +59,11 @@ class DateUtils():
         if self.start_date < day_nextweek:
             weeks += 1
         return weeks
+"""
+■使い方の例：
 startdate = datetime.datetime(2020,4,1,20,20,20)
 enddate = datetime.datetime(2020,4,30,20,20,20)
 work = DateUtils(startdate,enddate)  # 需要传入两个datetime格式日期
 print(list(work.workDays()))  # 获取一个元素为datetime日期格式的工作日期列表
 print(work.daysCount())  # 获取工作日期的天数
+"""

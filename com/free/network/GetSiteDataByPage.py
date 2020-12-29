@@ -15,63 +15,41 @@ import xlrd
 import xlwt
 from xlutils.copy import copy
 import datetime
-from com.free.util import LogUtils
-from com.free.util import MailUtils
+from com.free.utils import MailUtils
 # 用于解决爬取的数据格式化
 import io
 from future.backports.misc import count
-# Log日志
-# 数据文件路径
-# LogUtils.getLogger().logger.info('第一次测试')
-# 网站地址(天天基金网：开方式基金净值)
-url = 'http://fund.eastmoney.com/ZS_jzzzl.html#os_0;isall_0;ft_;pt_5'
-file_path = r"E:\AboutDeveloper\Workspace_Eclipse\freePy\com\free\download"
-excel_path = r"C:\Users\dapao\Desktop"
+"""
+※重要：共通方法的导入
+"""
+from com.free.constant import CommonConstants
+from com.free.utils.LogUtils import getDebugObj, getErrorObj
+mydebug = getDebugObj()
+myerror = getErrorObj()
+
+"""
+REDME
+详细解释：
+本工具读取“天天基金网”（http://fund.eastmoney.com/）的指数型基金数据，通过自定义算法计算出符合预期的基金。
+自定义算法：
+1，
+"""
+"""
+ULRd的描述部分
+"""
+#开放基金排行：近2年涨幅排名（前100） and 今年涨幅排名（前100）and 不分页 and 降序
+url1 = 'http://fund.eastmoney.com/data/fundranking.html#tall;c0;r2nzf,100_jnzf,100;sjnzf;pn10000;ddesc;qsd20191229;qed20201229;qdii;zq;gg;gzbd;gzfs;bbzt;sfbb'
+
+"""
+        共通函数的描述部分
+"""
+file_path = r"C:\working_myself\network\download\file"
+excel_path = r"C:\working_myself\network\excel"
 currentTime = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-fileNamePrefix = r"/network_tp1_data_"
-fileNameSuffix = ".html"
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb2312')
+fileNamePrefix = r"/site_data_page_"
+fileNameSuffix = ".txt"
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding=CommonConstants.ENCODING_GB2312)
 sys.setrecursionlimit(1000000)
-
-# 获取网站的对象
-def getHtmlTree(url):
-    
-    # 建立代理
-    proxy = {
-        'http': 'http://106.75.25.3:80'
-    }
-    # 设置请求头
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36',
-    }
-#     webPage = requests.get(url, headers=headers, proxies=proxy, timeout=1)
-    webPage = requests.get(url, headers=headers, timeout=1)
-    LogUtils.getLogger().logger.debug("状态码%d" %webPage.status_code)
-    #指定网站编码
-    webPage.encoding = 'gb2312'
-    htmlCode = webPage.text
-    htmlTree = BeautifulSoup(htmlCode, 'lxml')
-    return htmlTree
-
-# 对元素中的字符串去重空格换行
-def getText(str):
-    return str.replace("\n", "").strip()
-
-# 判断Class在元素中是否存在
-def isExistsClass(element,classStr):
-    #获取Tag自身的class，没有的话就向子Tag检索 
-    if "class" not in element.attrs and not element.find_all(class_= classStr):
-        return False
-    if element.find_all(class_= classStr):
-        return True
-    classS = element.attrs["class"]
-    if(len(classS) > 1) :
-        clStr = " ".join(classS)
-        if(clStr == classStr) :
-            return True
-    elif(classS[0] == classStr) :
-        return True
-    return False
 
 # 判断网页是否存在
 def adjustExist(url):
@@ -83,14 +61,14 @@ def adjustExist(url):
         networTree = ""
         # 如果文件存在就去读取
         if(os.path.exists(fileName)) :
-            LogUtils.getLogger().logger.info("文件存在,开始读取: %s" % fileName)
+            mydebug.logger.debug("文件存在,开始读取: %s" % fileName)
             openFile = open(fileName, "r", encoding='utf-8')
             # 获取网站的所有内容
             networTree = BeautifulSoup(openFile.read(), 'lxml')
         # 否则创建文件
         else :
-            LogUtils.getLogger().logger.info("没有文件,开始将读取网站写入文件: %s" % fileName)
-            openFile = open(fileName, "w", encoding='utf-8')
+            mydebug.logger.debug("没有文件,开始将读取网站写入文件: %s" % fileName)
+            openFile = open(fileName, "w", encoding=CommonConstants.ENCODING_UTF8)
             # 获取网站的所有内容
             networTree = getHtmlTree(url)
             openFile.write(networTree.prettify());
@@ -98,10 +76,10 @@ def adjustExist(url):
         openFile.close()
         # 删除文件
 #         os.remove(fileName)
-        LogUtils.getLogger().logger.info("文件删除成功: %s" % fileName)
+#        mydebug.logger.debug("文件删除成功: %s" % fileName)
         # 获取网页的Title
         networTitle = networTree.title.text
-        LogUtils.getLogger().logger.info("网站标题: %s" % networTitle)
+        mydebug.logger.debug("网站标题: %s" % networTitle)
         # 获取Table的所有tr
         networTrs = networTree.select("#oTable tbody tr")
         # 获取a标签 并且属性为#recommend-right > div.recommend-list-box.d-flex.flex-column.aside-box > ul > li:nth-child(2) > a > div > div
@@ -139,16 +117,56 @@ def adjustExist(url):
                     #是否可购买
                     if (isExistsClass(ntd,"bi")) :
                         execelMap[8] = getText(ntd.text)
-                LogUtils.getLogger().logger.info("Excel数据: %s" % execelMap)
+                mydebug.logger.debug("Excel数据: %s" % execelMap)
                 execelList.append(execelMap)
-            LogUtils.getLogger().logger.info("生成Excel数据成功,总件数: %d " % len(execelList))
+            mydebug.logger.debug("生成Excel数据成功,总件数: %d " % len(execelList))
         except Exception as e :
-            LogUtils.getErrorLogger().logger.error("生成Excel数据失败 % s" % e)
+            myerror.logger.error("生成Excel数据失败 % s" % e)
         return (execelTitle,execelList)
+
+#利用BeautifulSoup读取网站内容
+def getHtmlTree(url):
+    
+    # 建立代理
+    proxy = {
+        'http': 'http://106.75.25.3:80'
+    }
+    # 设置请求头
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36',
+    }
+#     webPage = requests.get(url, headers=headers, proxies=proxy, timeout=1)
+    webPage = requests.get(url, headers=headers, timeout=1)
+    mydebug.logger.debug("状态码%d" %webPage.status_code)
+    #指定网站编码
+    webPage.encoding = CommonConstants.ENCODING_UTF8
+    htmlCode = webPage.text
+    htmlTree = BeautifulSoup(htmlCode, 'lxml')
+    return htmlTree
+
+# 对元素中的字符串去重空格换行
+def getText(str):
+    return str.replace("\n", "").strip()
+
+# 判断Class在元素中是否存在
+def isExistsClass(element,classStr):
+    #获取Tag自身的class，没有的话就向子Tag检索 
+    if "class" not in element.attrs and not element.find_all(class_= classStr):
+        return False
+    if element.find_all(class_= classStr):
+        return True
+    classS = element.attrs["class"]
+    if(len(classS) > 1) :
+        clStr = " ".join(classS)
+        if(clStr == classStr) :
+            return True
+    elif(classS[0] == classStr) :
+        return True
+    return False
 
 def writeExcel(execelTitle,execelList):
     try :
-        LogUtils.getLogger().logger.info("开始生成Excel")
+        mydebug.logger.debug("开始生成Excel")
         # 创建sheet
         workbook = xlwt.Workbook(encoding='utf-8');
         add_sheet = workbook.add_sheet("Data")
@@ -176,12 +194,12 @@ def writeExcel(execelTitle,execelList):
                 add_sheet.write(index,7,label = ex[8]);
             index = index + 1;
         workbook.save(excel_path + r'\aaa.xls')
-        LogUtils.getLogger().logger.info("Excel生成成功【File Path:" + excel_path + "】")
+        mydebug.logger.debug("Excel生成成功【File Path:" + excel_path + "】")
     except Exception as e :
-        LogUtils.getErrorLogger().logger.error("Excel生成失败 % s" % e)
+        myerror.logger.error("Excel生成失败 % s" % e)
 
 if __name__ == '__main__':
-    (execelTitle,execelList) = adjustExist(url)
+    (execelTitle,execelList) = adjustExist(url1)
     writeExcel(execelTitle,execelList)
 #     MailUtils.sendmail("GetNetData", "xinxi")
 #     networObj = adjustExist(url)
