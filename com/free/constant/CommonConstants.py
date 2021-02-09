@@ -6,8 +6,8 @@ Created on 2020年11月25日
 """
 #定数クラス
 """
-DEFAULT_PASSWORD1 = "judfhldgwaufiife"
-DEFAULT_EMAIL1 = "1647470402@qq.com"
+DEFAULT_PASSWORD1 = "aaqvmowwtiryeeah"
+DEFAULT_EMAIL1 = "mymask139@foxmail.com"
 SMTPADDR1 = "smtp.qq.com"
 ENCODING_UTF8 = "utf-8"
 ENCODING_GB2312 = "gb2312"

@@ -40,10 +40,11 @@ def sendmail(subject, msg, filePath):
     '''
     @subject:邮件主题
     @msg:邮件内容
-    @toaddrs:收信人的邮箱地址
-    @fromaddr:发信人的邮箱地址
-    @smtpaddr:smtp服务地址，可以在邮箱看，比如163邮箱为smtp.163.com
-    @password:发信人的邮箱密码
+    @filePath:发送的附件的存放的全路径(没有的时候NULL)
+    @toaddrs:收信人的邮箱地址 (未实装)
+    @fromaddr:发信人的邮箱地址 (未实装)
+    @smtpaddr:smtp服务地址，可以在邮箱看，比如163邮箱为smtp.163.com (未实装)
+    @password:发信人的邮箱密码 (未实装)
     '''
     try:
         # 1,送信元は空の場合、デフォルトのメールをセットする

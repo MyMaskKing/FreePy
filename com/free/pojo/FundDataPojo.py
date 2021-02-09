@@ -4,7 +4,7 @@
 # Author    : 
 # File    : SiteDateByJsonPojo.py
 # 调用的例：from 包的路径.类名 import 类名
-class SiteDateByJsonPojo(object):
+class FundDataPojo(object):
     def _init_(self,fund_cd,fund_title,fund_time,NVA,LJJZ,growth_day,growth_week,growth_month,growth_three_month,growth_six_month,growth_year,growth_two_year,growth_three_year,growth_all,growth_current_year,establishment_date,service_charge,row_data_bak):
         self.fund_cd = fund_cd # 基金代码
         self.fund_title = fund_title # 基金简称
