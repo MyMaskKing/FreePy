@@ -1,7 +1,6 @@
 # coding=UTF-8
 '''
-######注意：首行必须定义编码
-######获取网站数据主类(CSDN测试)
+03_SuishoujiHelper_A_1说明：随手记网站的规则制定
 Created on 2020年4月2日
 
 @author: dapao
