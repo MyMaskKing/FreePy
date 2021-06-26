@@ -9,8 +9,13 @@ import os
 import sys
 import re
 from bs4 import BeautifulSoup
+from functools import singledispatch 
 import requests
 import xlrd
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait as Wait
 import xlsxwriter
 import json
 from xlutils.copy import copy
@@ -22,6 +27,7 @@ from telnetlib import theNULL
 from _datetime import date
 import time
 from selenium import webdriver
+from asyncio.tasks import sleep
 """
 ※重要：共通方法的导入
 """
@@ -69,11 +75,11 @@ def doWork():
     driver.find_element_by_id("email").send_keys("13298317423");
     driver.find_element_by_id("pwd").send_keys("cyj19970414");
     driver.find_element_by_id("loginSubmit").click();
-    
+    Wait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//li[@title='个人记账' and @data-bookid='553039169487']")))
+    driver.find_element_by_xpath("//li[@title='个人记账' and @data-bookid='553039169487']").click()
     # 记一笔的Link
     accessed_result = getPageContentByUrl(input_data_url,"suishouji");
     mydebug.logger.debug("当前访问网址内容已经获取")
-    # 关闭单个窗口
     # sitePage.close();
     # 关闭所有窗口
     driver.close();
@@ -82,28 +88,43 @@ def doWork():
     # API:https://beautifulsoup.readthedocs.io/zh_CN/latest/   ####
     ###############################################################
     domObj = BeautifulSoup(accessed_result,'html.parser')
-    #mydebug.logger.debug(domObj.prettify())
+    mydebug.logger.debug(domObj.prettify())
 
     # 创建sheet
     workbook = xlsxwriter.Workbook(result_excel_path);
-    workbook.add_worksheet("自定义规则")
+    rule_define_sheet = workbook.add_worksheet("自定义规则")
     reference_sheet = workbook.add_worksheet("自定义时参照用")
-    excel_row_data_write(getNextRowNum(),reference_sheet,['下记内容是从随手记网站上下载'])
+    rule_define_sheet.set_column("A:B", 30)
+    excel_row_data_write(0,reference_sheet,['下记内容是从随手记网站上下载'])
     
+    # 创建一种样式, 后续可以应用于单元格等区域
+    format1 = workbook.add_format({
+        'font_color': 'red'
+    })
+    format2 = workbook.add_format({'bold': True, 'font_color': 'green'})
+    
+    # 自定义规则Sheet第一行
+    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['请对下面的内容入力模糊匹配值'],format1)
+    excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[])
+    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['（随手记网站）分类名','（请入力）模糊匹配值'],format2)
     # 随手记网站：分类
-    excel_row_data_write(getNextRowNum(),reference_sheet,['分类名','分类ID'])
+    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,['分类名','分类ID'])
     fenleiStr = domObj.find_all("li",class_="ls-li ls-li2",id=re.compile(r"ls-li-payout-"))
     for obj in fenleiStr:
         objData = obj['onclick'].split(",")
         mydebug.logger.debug("-===============" + obj['onclick'])
-        excel_row_data_write(getNextRowNum(),reference_sheet,[objData[1].replace("'",""),objData[2].replace(");","")])
+        excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[objData[1].replace("'","")])
+        excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[objData[1].replace("'",""),objData[2].replace(");","")])
     # 随手记网站：账户
-    excel_row_data_write(getNextRowNum(),reference_sheet,[])
-    excel_row_data_write(getNextRowNum(),reference_sheet,['账户名','账户ID'])
+    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[])
+    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,['账户名','账户ID'])
+    excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[])
+    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['（随手记网站）账户名','（请入力）模糊匹配值'],format2)
     accountStr = domObj.find_all("li",id=re.compile(r"tb-outAccount-1_v_"))
     for obj in accountStr:
         mydebug.logger.debug("-===============" + obj['id']+ "=======" + obj['title'])
-        excel_row_data_write(getNextRowNum(),reference_sheet,[obj['title'],obj['id'].replace("tb-outAccount-1_v_","")])
+        excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[obj['title']])
+        excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[obj['title'],obj['id'].replace("tb-outAccount-1_v_","")])
     workbook.close()
     mydebug.logger.debug("Excel做成：" + result_excel_path)
 # 1-1获取网站的对象
@@ -119,13 +140,13 @@ def getPageContentByUrl(url,headerFlg):
             'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
             ,'accept-encoding': 'gzip, deflate, br'
             ,'accept-language': 'zh-CN,zh;q=0.9'
-            ,'cache-control': 'max-age=0'
-            ,'cookie': '__vistor=78D637F71f08wxwc2; __nick=13298317423; _bookTabSwitchList=1b9fc03c54dba0b4eaa5dd344ce36b50|1|0&; SESSION_COOKIE=a8e14a3d3446b0d7b8155ae885f316e7; Hm_lvt_3db4e52bb5797afe0faaa2fde5c96ea4=1624287771,1624368747,1624459185,1624539137; __spm_bid=3cdd9189ee8es6a1p61d7d9953m8f8e4; __utma=121176714.689405425.1615206481.1624459186.1624539258.19; __utmc=121176714; __utmz=121176714.1624539258.19.2.utmcsr=login.sui.com|utmccn=(referral)|utmcmd=referral|utmcct=/; SESSION=13adc4b6-de6f-42e7-ad47-a080df3a1e45; __utmt=1; Hm_lpvt_3db4e52bb5797afe0faaa2fde5c96ea4=1624540568; __utmb=121176714.8.10.1624539258'
+            ,'cookie': '__vistor=78D637F71f08wxwc2; __nick=13298317423; __utmz=121176714.1624539258.19.2.utmcsr=login.sui.com|utmccn=(referral)|utmcmd=referral|utmcct=/; __spm_bid=03969bab0a2as6f9p251141196mfd5fe; _bookTabSwitchList=1b9fc03c54dba0b4eaa5dd344ce36b50|1|0&; SESSION_COOKIE=a8e14a3d3446b0d7b8155ae885f316e7; Hm_lvt_3db4e52bb5797afe0faaa2fde5c96ea4=1624539137,1624631464,1624636409,1624707801; __utmc=121176714; SESSION=5dca7339-2fa7-40ed-af98-63b659987e8e; __utma=121176714.689405425.1615206481.1624707803.1624710944.24; __utmt=1; Hm_lpvt_3db4e52bb5797afe0faaa2fde5c96ea4=1624712541; __utmb=121176714.5.10.1624710944'
+            ,'referer': 'https://www.sui.com/tally/new.do'
             ,'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="91", "Chromium";v="91"'
             ,'sec-ch-ua-mobile': '?0'
             ,'sec-fetch-dest': 'document'
             ,'sec-fetch-mode': 'navigate'
-            ,'sec-fetch-site': 'none'
+            ,'sec-fetch-site': 'same-origin'
             ,'sec-fetch-user': '?1'
             ,'upgrade-insecure-requests': '1'
             ,'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36'
@@ -133,7 +154,7 @@ def getPageContentByUrl(url,headerFlg):
         webPage = requests.get(url, headers=headers)
     else:
         webPage = requests.get(url)
-#     webPage = requests.get(url, headers=headers, proxies=proxy, timeout=1)
+        #webPage = requests.get(url, headers=headers, proxies=proxy, timeout=1)
     mydebug.logger.debug("当前访问网址：%s" %url)
     mydebug.logger.debug("访问后的状态码%d" %webPage.status_code)
     #指定网站编码
@@ -144,18 +165,34 @@ def getPageContentByUrl(url,headerFlg):
 ####################################################
 ## 99-0:共通方法：Excel的行数据写入(共同)
 ####################################################
-def excel_row_data_write(rowNum, excelDom, dataArray):
+def excel_row_data_write(rowNum, sheetDom, dataArray):
     indexVal = 0
     for data in dataArray:
-        excelDom.write(rowNum,indexVal,data);
+        sheetDom.write(rowNum,indexVal,data);
         indexVal = indexVal + 1
 
-row_basic_nm = 0
-# Excel生成帮助
-def getNextRowNum():
-    global row_basic_nm
-    row_basic_nm = row_basic_nm + 1
-    return row_basic_nm - 1
+####################################################
+## 99-0:共通方法：Excel的行数据写入(共同)样式
+####################################################
+def excel_row_data_write_format(rowNum, excelDom, dataArray, format):
+    indexVal = 0
+    for data in dataArray:
+        excelDom.write(rowNum,indexVal,data, format);
+        indexVal = indexVal + 1
+
+reference_sheet_row_index = 0
+# Sheet1的Row_index生成帮助
+def getNextRowNumOfReferenceSheet():
+    global reference_sheet_row_index
+    reference_sheet_row_index = reference_sheet_row_index + 1
+    return reference_sheet_row_index - 1
+
+rule_define_sheet_row_index = 0
+# Sheet2的Row_index生成帮助
+def getNextRowNumOfRuleDefineSheet():
+    global rule_define_sheet_row_index
+    rule_define_sheet_row_index = rule_define_sheet_row_index + 1
+    return rule_define_sheet_row_index - 1
 
 if __name__ == '__main__':
     #URL1:开放基金排行：近2年涨幅排名（前100） and 今年    涨幅排名（前100）and 不分页 and 降序
