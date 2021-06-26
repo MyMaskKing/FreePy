@@ -28,6 +28,7 @@ from _datetime import date
 import time
 from selenium import webdriver
 from asyncio.tasks import sleep
+import urllib.request
 """
 ※重要：共通方法的导入
 """
@@ -70,32 +71,14 @@ result_excel_path = r"C:\myfree_config\freePy\network\SuishoujiHelper\作业报�
 ### 1，开始工作，创建【随手记自动记账规则制定】文件
 ######################################################
 def doWork():
-    # Login
-    driver.get(login_url);
-    driver.find_element_by_id("email").send_keys("13298317423");
-    driver.find_element_by_id("pwd").send_keys("cyj19970414");
-    driver.find_element_by_id("loginSubmit").click();
-    Wait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//li[@title='个人记账' and @data-bookid='553039169487']")))
-    driver.find_element_by_xpath("//li[@title='个人记账' and @data-bookid='553039169487']").click()
-    # 记一笔的Link
-    accessed_result = getPageContentByUrl(input_data_url,"suishouji");
-    mydebug.logger.debug("当前访问网址内容已经获取")
-    # sitePage.close();
-    # 关闭所有窗口
-    driver.close();
-    
-    ###############################################################
-    # API:https://beautifulsoup.readthedocs.io/zh_CN/latest/   ####
-    ###############################################################
-    domObj = BeautifulSoup(accessed_result,'html.parser')
-    mydebug.logger.debug(domObj.prettify())
-
+    ####################
     # 创建sheet
+    ####################
     workbook = xlsxwriter.Workbook(result_excel_path);
     rule_define_sheet = workbook.add_worksheet("自定义规则")
-    reference_sheet = workbook.add_worksheet("自定义时参照用")
+    reference_sheet = workbook.add_worksheet("自定义入力时参照用")
     rule_define_sheet.set_column("A:B", 30)
-    excel_row_data_write(0,reference_sheet,['下记内容是从随手记网站上下载'])
+    excel_row_data_write(0,reference_sheet,['以下内容是从随手记网站上下载'])
     
     # 创建一种样式, 后续可以应用于单元格等区域
     format1 = workbook.add_format({
@@ -105,26 +88,84 @@ def doWork():
     
     # 自定义规则Sheet第一行
     excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['请对下面的内容入力模糊匹配值'],format1)
+    
+    # Login
+    driver.get(login_url);
+    driver.find_element_by_id("email").send_keys("13298317423");
+    driver.find_element_by_id("pwd").send_keys("cyj19970414");
+    driver.find_element_by_id("loginSubmit").click();
+    mydebug.logger.debug("登录成功")
+    # 点击个人记账的账本
+    Wait(driver, 60).until(EC.presence_of_element_located((By.XPATH, ".//*[text()='个人记账']")))
+    driver.find_element_by_xpath(".//*[text()='个人记账']").click()
+    mydebug.logger.debug("已选择账本【个人记账】")
+    # 记一笔的Link
+    Wait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//a[@href='https://www.sui.com/tally/new.do']")))
+    driver.find_element_by_xpath("//a[@href='https://www.sui.com/tally/new.do']").click()
+    
+    # 获取随手记网站：分类
+    Wait(driver, 60).until(EC.presence_of_element_located((By.XPATH, "//li[@class='ls-li ls-li2']")))
+    fenlei_all = driver.find_elements_by_xpath("//li[@class='ls-li ls-li2']")
+    mydebug.logger.debug("获取随手记网站：分类")
+    fenlei_tem_list=[]
+    fenlei_list=[]
+    for fenlei_all_str in fenlei_all :
+        fenlei_str = fenlei_all_str.get_attribute("outerHTML").__str__().replace('"', "'")
+        fenlei_str_format_1 = fenlei_str.split("onclick='levelSelect.choose(")[1]
+        fenlei_str_format_2 = fenlei_str_format_1.split(");'><span")[0]
+        fenlei_str_format_3 = fenlei_str_format_2.replace("'","")
+        fenlei_str_format_4 = fenlei_str_format_3.split(",")
+        fenlei_tem_list.append((fenlei_str_format_4[0].replace("1",""),fenlei_str_format_4[1],fenlei_str_format_4[2]))
+    # 获取随手记网站：去重
+    for tmp in fenlei_tem_list :
+        if tmp not in fenlei_list :
+            fenlei_list.append(tmp)
+            mydebug.logger.debug(tmp)
+    # 获取随手记网站：账户
+    mydebug.logger.debug("获取随手记网站：账户（共同）")
+    zhanghu_list=[]
+    zhanghu_all = driver.find_elements_by_xpath("//li[contains(@id,'tb-outAccount-1_v_')]")
+    for zhanghu_all_str in zhanghu_all :
+        zhanghu_str = zhanghu_all_str.get_attribute("outerHTML").__str__().replace('"', "'")
+        zhanghu_str_format_1 = zhanghu_str.split("' class='' title='")
+        zhanghu_id = zhanghu_str_format_1[0].replace("<li id='tb-outAccount-1_v_","")
+        zhanghu_nm = zhanghu_str_format_1[1].split("' value='")[0]
+        zhanghu_list.append((zhanghu_nm,zhanghu_id))
+        mydebug.logger.debug(zhanghu_id + "======================" + zhanghu_nm)
+    # sitePage.close();
+    # 关闭所有窗口
+    driver.close();
+    
+    ###############################################################
+    # API:https://beautifulsoup.readthedocs.io/zh_CN/latest/   ####
+    ###############################################################
+    #domObj = BeautifulSoup(accessed_result,'html.parser')
+    #mydebug.logger.debug(domObj.prettify())
+    # 随手记网站：分类_支出
     excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[])
-    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['（随手记网站）分类名','（请入力）模糊匹配值'],format2)
-    # 随手记网站：分类
-    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,['分类名','分类ID'])
-    fenleiStr = domObj.find_all("li",class_="ls-li ls-li2",id=re.compile(r"ls-li-payout-"))
-    for obj in fenleiStr:
-        objData = obj['onclick'].split(",")
-        mydebug.logger.debug("-===============" + obj['onclick'])
-        excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[objData[1].replace("'","")])
-        excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[objData[1].replace("'",""),objData[2].replace(");","")])
+    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['（随手记网站）分类名_支出','（请入力）模糊匹配值'],format2)
+    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,['分类名_支出','分类_支出_ID'])
+    for objData in fenlei_list:
+        if objData[0] == 'payout' :
+            excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[objData[1]])
+            excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[objData[1],objData[2]])
+    # 随手记网站：分类_收入
+    excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[])
+    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['（随手记网站）分类名_收入','（请入力）模糊匹配值'],format2)
+    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[])
+    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,['分类名_收入','分类_收入_ID'])
+    for objData in fenlei_list:
+        if objData[0] == 'income' :
+            excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[objData[1]])
+            excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[objData[1],objData[2]])
     # 随手记网站：账户
     excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[])
-    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,['账户名','账户ID'])
+    excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,['账户名','账户_ID'])
     excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[])
-    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['（随手记网站）账户名','（请入力）模糊匹配值'],format2)
-    accountStr = domObj.find_all("li",id=re.compile(r"tb-outAccount-1_v_"))
-    for obj in accountStr:
-        mydebug.logger.debug("-===============" + obj['id']+ "=======" + obj['title'])
-        excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[obj['title']])
-        excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[obj['title'],obj['id'].replace("tb-outAccount-1_v_","")])
+    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['（随手记网站）账户名','（请入力）模糊匹配文件名'],format2)
+    for obj in zhanghu_list:
+        excel_row_data_write(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,[obj[0]])
+        excel_row_data_write(getNextRowNumOfReferenceSheet(),reference_sheet,[obj[0],obj[1]])
     workbook.close()
     mydebug.logger.debug("Excel做成：" + result_excel_path)
 # 1-1获取网站的对象
@@ -149,9 +190,10 @@ def getPageContentByUrl(url,headerFlg):
             ,'sec-fetch-site': 'same-origin'
             ,'sec-fetch-user': '?1'
             ,'upgrade-insecure-requests': '1'
-            ,'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36'
+            ,'user-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.106 Safari/537.36'
         }
-        webPage = requests.get(url, headers=headers)
+        file=urllib.request.urlopen(url)
+        webPage = requests.get(url, headers=file.info())
     else:
         webPage = requests.get(url)
         #webPage = requests.get(url, headers=headers, proxies=proxy, timeout=1)
