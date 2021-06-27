@@ -64,7 +64,7 @@ sys.setrecursionlimit(1000000)
 login_url = r"https://login.sui.com/"
 input_data_url = r"https://www.sui.com/tally/new.do"
 driver = webdriver.Firefox(executable_path =r"C:\myfree_config\freePy\browser_driver\geckodriver.exe")
-result_excel_path = r"C:\myfree_config\freePy\network\SuishoujiHelper\作业报告\随手记自动记账规则制定.xlsx"
+result_excel_path = r"C:\myfree_config\freePy\network\SuishoujiHelper\作业报告\第一步_随手记自动记账规则制定.xlsx"
 
 #####################################################
 ### 00_3:Excel 样式
@@ -91,6 +91,7 @@ def doWork():
     # 自定义规则Sheet第一行
     excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['【分类名/分类ID/账户名/账户ID】是从随手记网站使用您的账户登录后，对您的随手记网站信息进行收集而来。'],format1)
     excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['为了对您的流水数据进行分类，请您对随手记网站的内容填入模糊匹配值，多个匹配值时用英文逗号【,】分割。'],format1)
+    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['模糊匹配值入力规则：1.多个匹配值时英文逗号分割 2.【!】不匹配，例如：!交易关闭'],format1)
     
     # Login
     driver.get(login_url);
