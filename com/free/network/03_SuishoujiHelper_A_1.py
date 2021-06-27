@@ -89,7 +89,7 @@ def doWork():
     rule_define_sheet.set_column("A:C", 30)
     
     # 自定义规则Sheet第一行
-    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['【分类名/分类ID/账户名/账户ID】是从随手记网站是使用您的账户登录后，对您的随手记网站信息进行收集而来。'],format1)
+    excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['【分类名/分类ID/账户名/账户ID】是从随手记网站使用您的账户登录后，对您的随手记网站信息进行收集而来。'],format1)
     excel_row_data_write_format(getNextRowNumOfRuleDefineSheet(),rule_define_sheet,['为了对您的流水数据进行分类，请您对随手记网站的内容填入模糊匹配值，多个匹配值时用英文逗号【,】分割。'],format1)
     
     # Login

@@ -9,14 +9,13 @@ import os
 import sys
 import re
 import csv
-import pandas as pd
+import openpyxl
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from time import sleep
 import requests
-import xlrd
 import xlsxwriter
 from xlutils.copy import copy
 import datetime
@@ -40,14 +39,20 @@ myerror = getErrorObj()
 ####################################################
 work_file_folder_path = r"C:\myfree_config\freePy\network\SuishoujiHelper\流水数据文件"
 result_file_folder_path = r"C:/myfree_config/freePy/network/SuishoujiHelper/作业报告/"
+rule_file_path = r"C:/myfree_config/freePy/network/SuishoujiHelper/作业报告/随手记自动记账规则制定.xlsx"
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding=CommonConstants.ENCODING_UTF8)
 sys.setrecursionlimit(1000000)
-
+####################################################
+## 00_2共同变量
+####################################################
+rule_fenlei_zhichu_list = []
+rule_fenlei_shoru_list = []
+rule_zhanghu_list = []
 ####################################################
 ## 1,将支付宝和微信的流水文件合并成可以被随手记自动化利用的文件
 ####################################################
 def crt_suishoujiInputFile():
-    mydebug.logger.debug("开始读取工作文件")
+    mydebug.logger.debug("开始读取工作CSV文件")
     # Excel作成命令开启
     excelDom = xlsxwriter.Workbook(result_file_folder_path + "记账数据_待确认(自动记账用).xlsx");
     sheel1Dom = excelDom.add_worksheet("随手记登录流水数据(支付宝和微信)")
@@ -68,9 +73,68 @@ def crt_suishoujiInputFile():
     excelDom.close()
 
 ####################################################
-## 1-1-1,支付宝和微信开始读取
+## 1-1,支付宝和微信开始读取
+####################################################
+def readRuleExcel():
+    global rule_fenlei_zhichu_list
+    global rule_fenlei_shoru_list
+    global rule_zhanghu_list
+    mydebug.logger.debug("开始读取【随手记自动记账规则制定】工作EXCEL文件")
+    wb = openpyxl.load_workbook(rule_file_path)
+    sheets = wb.sheetnames
+    print(sheets[0])
+    sheetDom = wb[sheets[0]]
+    sheet_max_row = sheetDom.max_row
+    sheet_max_col = sheetDom.max_column
+    print('【随手记自动记账规则制定】工作EXCEL文件：{}行 {}列'.format(sheet_max_row, sheet_max_col))
+    title_flg = 0
+    rule_fenlei_zhichu_flg = 0
+    rule_fenlei_shouru_flg = 0
+    rule_zhanghu_flg = 0
+    for row_index in range(1,sheet_max_row+1): # 行
+        tmp_row_data =[]
+        for col_index in range(1,sheet_max_col+1): #列
+            cell_val = sheetDom.cell(row_index,col_index).value
+            if cell_val == "（随手记网站）分类名（支出）":
+                rule_fenlei_shouru_flg = 0
+                rule_zhanghu_flg = 0
+                rule_fenlei_zhichu_flg = 1
+                title_flg = 1
+                break
+            elif cell_val == "（随手记网站）分类名（收入）":
+                rule_fenlei_zhichu_flg = 0
+                rule_zhanghu_flg = 0
+                rule_fenlei_shouru_flg = 1
+                title_flg = 1
+                break
+            elif cell_val == "（随手记网站）账户名":
+                rule_fenlei_zhichu_flg = 0
+                rule_fenlei_shouru_flg = 0
+                rule_zhanghu_flg = 1
+                title_flg = 1
+                break
+            if sheetDom.cell(row_index,1).value == None :
+                title_flg = 1
+                break
+            if cell_val != None :
+                tmp_row_data.append(cell_val)
+        if title_flg == 1:
+            title_flg = 0
+            continue
+        if rule_fenlei_zhichu_flg == 1 :
+            rule_fenlei_zhichu_list.append(tmp_row_data)
+        if rule_fenlei_shouru_flg == 1 :
+            rule_fenlei_shoru_list.append(tmp_row_data)
+        if rule_zhanghu_flg == 1 :
+            rule_zhanghu_list.append(tmp_row_data)
+    print(len(rule_fenlei_zhichu_list),len(rule_fenlei_shoru_list),len(rule_zhanghu_list))
+    return rule_fenlei_zhichu_list,rule_fenlei_shoru_list,rule_zhanghu_list
+
+####################################################
+## 1-2,支付宝和微信开始读取
 ####################################################
 def all_file_data_create(file_path,excelDom,sheel1Dom,index_Val):
+    rule_fenlei_zhichu_list,rule_fenlei_shoru_list,rule_zhanghu_list = readRuleExcel()
     work_file_nm = ""
     ######################
     # 文件类型：1支付宝 2微信 #
@@ -100,23 +164,59 @@ def all_file_data_create(file_path,excelDom,sheel1Dom,index_Val):
                 # Excel数据写入
                 # 用法 add_sheet.write(行,列,label=写入内容)
                 if work_file_typ == 1 :
-                    excel_row_data_write(default_row_index_Val,sheel1Dom,row_data)
+                    # 支付宝流水文件处理
+                    match_row_data = has_flg_by_list(rule_zhanghu_list,[file_path,row_data[4],row_data[6]])
+                    if match_row_data != None :
+                        print(has_flg_by_list(rule_zhanghu_list,[file_path,row_data[4],row_data[6]]),row_data)
+                    #excel_row_data_write_by_zhifubao(default_row_index_Val,sheel1Dom,row_data)
                 else :
-                    excel_row_data_write(default_row_index_Val,sheel1Dom,row_data)
+                    # 微信流水文件处理
+                    excel_row_data_write_by_weixin(default_row_index_Val,sheel1Dom,row_data)
                 default_row_index_Val = default_row_index_Val + 1
     return default_row_index_Val
+
 ####################################################
 ## 99-0:共通方法：Excel的行数据写入(共同)
 ####################################################
-def excel_row_data_write(rowNum, excelDom, dataArray):
+def has_flg_by_list(match_list,target_list):
+    for match_data in match_list:
+        if len(match_data) > 2:
+            match_str = match_data[2]
+            # 含有多个匹配值
+            if ("," in match_str) :
+                match_success_count = 1
+                match_str_1 = match_str.split(",")
+                for ms1 in match_str_1:
+                    neq_flg = 0
+                    if "!" in ms1 :
+                        ms1 = ms1.replace("!","")
+                        neq_flg = 1
+                    for target_data in target_list:
+                        if ms1 in target_data :
+                            match_success_count = match_success_count +1
+                            if neq_flg == 1:
+                                neq_flg = 0
+                                match_success_count = 0
+                                break
+                if match_success_count == len(match_str_1) :
+                    return match_data
+            # 1个匹配值
+            else:
+                for target_data in target_list:
+                    if match_str in target_data :
+                        return match_data
+####################################################
+## 99-0:共通方法：Excel的行数据写入(共同)
+####################################################
+def excel_row_data_write(rowNum, sheetDom, dataArray):
     indexVal = 0
     for data in dataArray:
-        excelDom.write(rowNum,indexVal,data);
+        sheetDom.write(rowNum,indexVal,data);
         indexVal = indexVal + 1
 ####################################################
 ## 99-1:共通方法：Excel的行数据写入(支付宝)
 ####################################################
-def excel_row_data_write1(rowNum, excelDom, dataArray):
+def excel_row_data_write_by_zhifubao(rowNum, excelDom, dataArray):
     excelDom.write(rowNum,0,label = dataArray[0]);
     excelDom.write(rowNum,1,label = dataArray[3]);
     excelDom.write(rowNum,2,label = dataArray[4]);
@@ -126,7 +226,7 @@ def excel_row_data_write1(rowNum, excelDom, dataArray):
 ####################################################
 ## 99-2:共通方法：Excel的行数据写入(微信)
 ####################################################
-def excel_row_data_write2(rowNum, excelDom, dataArray):
+def excel_row_data_write_by_weixin(rowNum, excelDom, dataArray):
     excelDom.write(rowNum,0,label = dataArray[4]);
     excelDom.write(rowNum,1,label = dataArray[3]);
     excelDom.write(rowNum,2,label = dataArray[6]);
